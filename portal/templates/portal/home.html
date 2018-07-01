@@ -1,0 +1,195 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CaaS - HPCC</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css" integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+  <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
+
+  <style>
+  td {
+    white-space: normal !important;
+    word-wrap: break-word;
+    vertical-align: middle !important;
+  }
+  table {
+    table-layout: fixed;
+  }
+  </style>
+</head>
+
+
+<body>
+<nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'portal:home' %}">HPCC CaaS</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarText">
+      <ul class="navbar-nav mr-auto nav-tabs">
+
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'portal:home' %}">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:stacks' %}">Stacks</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:instances' %}">Instances</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:volumes' %}">Volumes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:images' %}">Images</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:keypairs' %}">Keypairs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:networks' %}">Networks</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:flavors' %}">Flavors</a>
+        </li>
+
+      </ul>
+      <span class="navbar-text">
+        {% if is_admin == True %}
+        <a href="{% url 'portal:mgr_hypervisors' %}"><button type="button" class="btn btn-raised btn-secondary">ADMIN SITE</button></a>
+        {% endif %}
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:create_stack' %}" ><i class="fas fa-plus"></i> Create stack</a></button>
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:logout_system' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></button>
+      </span>
+    </div>
+</nav>
+
+
+<div class="container-fluid">
+      <h2>Welcome {{ user_name }} | Home page </h2>
+      <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th style="width: 30%">Project Quotas</th>
+            <th>In use</th>
+            <th>Limit</th>
+            <th>Reserved</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>Instances</td>
+            <td>{{ compute_quotas.quota_set.instances.in_use }}</td>
+            <td>{{ compute_quotas.quota_set.instances.limit }}</td>
+            <td>{{ compute_quotas.quota_set.instances.reserved }}</td>
+          </tr>
+          <tr>
+            <td>vCPUs</td>
+            <td>{{ compute_quotas.quota_set.cores.in_use }}</td>
+            <td>{{ compute_quotas.quota_set.cores.limit }}</td>
+            <td>{{ compute_quotas.quota_set.cores.reserved }}</td>
+          </tr>
+          <tr>
+            <td>RAM</td>
+            <td>{{ compute_quotas.quota_set.ram.in_use }} MB</td>
+            <td>{{ compute_quotas.quota_set.ram.limit }} MB</td>
+            <td>{{ compute_quotas.quota_set.ram.reserved }} MB</td>
+          </tr>
+          <tr>
+            <td>Floating IPs</td>
+            <td>{{ network_quotas.quota.floatingip.used }}</td>
+            <td>{{ network_quotas.quota.floatingip.limit }}</td>
+            <td>{{ network_quotas.quota.floatingip.reserved }}</td>
+          </tr>
+          <tr>
+            <td>Security Groups</td>
+            <td>{{ compute_quotas.quota_set.security_groups.in_use }}</td>
+            <td>{{ compute_quotas.quota_set.security_groups.limit }}</td>
+            <td>{{ compute_quotas.quota_set.security_groups.reserved }}</td>
+          </tr>
+          <tr>
+            <td>Volumes</td>
+            <td>{{ volume_quotas.quota_set.volumes.in_use }}</td>
+            <td>{{ volume_quotas.quota_set.volumes.limit }}</td>
+            <td>{{ volume_quotas.quota_set.volumes.reserved }}</td>
+          </tr>
+          <tr>
+            <td>Volume Storage</td>
+            <td>{{ volume_quotas.quota_set.gigabytes.in_use }} GB</td>
+            <td>{{ volume_quotas.quota_set.gigabytes.limit }} GB</td>
+            <td>{{ volume_quotas.quota_set.gigabytes.reserved }} GB</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th style="width: 30%">Session information</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>User name</td>
+            <td>{{ user_name }}</td>
+          </tr>
+          <tr>
+            <td>User ID</td>
+            <td>{{ user_id }}</td>
+          </tr>
+          <tr>
+            <td>Domain name</td>
+            <td>{{domain_name}}</td>
+          </tr>
+          <tr>
+            <td>Domain ID</td>
+            <td>{{domain_id}}</td>
+          </tr>
+          <tr>
+            <td>Authenticated Token</td>
+            <td>{{X_Auth_Token}}</td>
+          </tr>
+          <tr>
+            <td>Roles list (Name - ID)</td>
+            <td>
+              {% for role in roles %}
+                {{role.name}} - {{role.id}}<br/>
+              {% endfor %}
+            </td>
+          </tr>
+          <tr>
+            <td>Project name</td>
+            <td>{{project_name}}</td>
+          </tr>
+          <tr>
+            <td>Project ID</td>
+            <td>{{project_id}}</td>
+          </tr>
+          <tr>
+            <td>Session start at</td>
+            <td>{{token_issued}}</td>
+          </tr>
+          <tr>
+            <td>Session expires at</td>
+            <td>{{token_expires}}</td>
+          </tr>
+        </tbody>
+      </table>
+</div>
+
+<!--
+<footer class="container-fluid text-left">
+  <div>[CONFIDENTAL] Vu Anh Son - HEDSPI 8 - Thesis - Cluster as a Service v0.2</div>
+</footer>
+-->
+</body>
+</html>

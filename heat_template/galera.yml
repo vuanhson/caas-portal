@@ -1,0 +1,166 @@
+heat_template_version: 2017-02-24
+description: galera cluster 3 node
+
+parameters:
+  key_name:
+    type: string
+    label: Enter keypair
+    description: keypair
+  image:
+    type: string
+    label: Enter image name
+    description: image
+    default: centos7-software-config-hostname
+  flavor:
+    type: string
+    label: Enter flavor
+    description: flavor
+  network:
+    type: string
+    label: Enter network name or ID
+    description: network 
+    default: external
+
+  db_password:
+    type: string
+    label: DB Password
+    default: Anhson2311
+    hidden: true
+
+
+resources:
+  firstnode_config:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: firstnode_ipaddr
+      - name: db_password
+      config: |
+        #!/bin/sh -x
+        yum install centos-release-scl -y 
+        yum --enablerepo=centos-sclo-rh -y install rh-mariadb102-mariadb-server-galera 
+        mv /etc/opt/rh/rh-mariadb102/my.cnf.d/galera.cnf /etc/opt/rh/rh-mariadb102/my.cnf.d/galera.cnf.org 
+        export CONFIG_FILE="/etc/opt/rh/rh-mariadb102/my.cnf.d/mariadb-server.cnf"
+        sed -i '/#wsrep_on=ON/s/^#//g' $CONFIG_FILE
+        sed -i 's@#wsrep_provider=@wsrep_provider=/opt/rh/rh-mariadb102/root/usr/lib64/galera/libgalera_smm.so@g' $CONFIG_FILE
+        sed -i 's@#wsrep_cluster_address=@wsrep_cluster_address=gcomm://@g' $CONFIG_FILE
+        sed -i '/#binlog_format=row/s/^#//g' $CONFIG_FILE
+        sed -i '/#default_storage_engine=InnoDB/s/^#//g' $CONFIG_FILE
+        sed -i '/#innodb_autoinc_lock_mode=2/s/^#//g' $CONFIG_FILE
+        sed -i '/#bind-address=0.0.0.0/s/^#//g' $CONFIG_FILE
+        sed -i '/\[galera\]/a wsrep_cluster_name="MariaDB_Cluster" \nwsrep_node_address="'$firstnode_ipaddr'" \nwsrep_sst_method=rsync' $CONFIG_FILE
+        /opt/rh/rh-mariadb102/root/usr/bin/galera_new_cluster
+        source /opt/rh/rh-mariadb102/enable
+        mysql -e "UPDATE mysql.user SET Password = PASSWORD('$db_password') WHERE User = 'root'"
+        mysql -e "DROP USER ''@'localhost'"
+        mysql -e "DROP USER ''@'$(hostname)'"
+        mysql -e "DROP DATABASE test"
+        mysql -e "FLUSH PRIVILEGES"
+
+  firstnode_deployment:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_resource: firstnode_config
+      server:
+        get_resource: first_node
+      input_values:
+        firstnode_ipaddr: {get_attr: [first_node, first_address]}
+        db_password: {get_param: db_password}
+
+  first_node:
+    type: OS::Nova::Server
+    properties:
+      key_name: {get_param: key_name}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      networks:
+        - network: {get_param: network}
+      # flavor, image etc
+      user_data_format: SOFTWARE_CONFIG
+
+
+  othernode_config:
+      type: OS::Heat::SoftwareConfig
+      properties:
+        group: script
+        inputs:
+        - name: firstnode_ipaddr
+        - name: secondnode_ipaddr
+        - name: thirdnode_ipaddr
+        - name: deployingnode_ipaddr
+        config: |
+          #!/bin/sh -x
+          yum install centos-release-scl -y 
+          yum --enablerepo=centos-sclo-rh -y install rh-mariadb102-mariadb-server-galera 
+          mv /etc/opt/rh/rh-mariadb102/my.cnf.d/galera.cnf /etc/opt/rh/rh-mariadb102/my.cnf.d/galera.cnf.org 
+          export CONFIG_FILE="/etc/opt/rh/rh-mariadb102/my.cnf.d/mariadb-server.cnf"
+          sed -i '/#wsrep_on=ON/s/^#//g' $CONFIG_FILE
+          sed -i 's@#wsrep_provider=@wsrep_provider=/opt/rh/rh-mariadb102/root/usr/lib64/galera/libgalera_smm.so@g' $CONFIG_FILE
+          sed -i 's@#wsrep_cluster_address=@wsrep_cluster_address="gcomm://'$firstnode_ipaddr','$secondnode_ipaddr','$thirdnode_ipaddr'"@g' $CONFIG_FILE
+          sed -i '/#binlog_format=row/s/^#//g' $CONFIG_FILE
+          sed -i '/#default_storage_engine=InnoDB/s/^#//g' $CONFIG_FILE
+          sed -i '/#innodb_autoinc_lock_mode=2/s/^#//g' $CONFIG_FILE
+          sed -i '/#bind-address=0.0.0.0/s/^#//g' $CONFIG_FILE
+          sed -i '/\[galera\]/a wsrep_cluster_name="MariaDB_Cluster" \nwsrep_node_address="'$deployingnode_ipaddr'" \nwsrep_sst_method=rsync' $CONFIG_FILE
+          sudo systemctl start rh-mariadb102-mariadb 
+
+
+  secondnode_deployment:
+    type: OS::Heat::SoftwareDeployment
+    depends_on: firstnode_deployment
+    properties:
+      config:
+        get_resource: othernode_config
+      server:
+        get_resource: second_node
+      input_values:
+        firstnode_ipaddr: {get_attr: [first_node, first_address]}
+        secondnode_ipaddr: {get_attr: [second_node, first_address]}
+        thirdnode_ipaddr: {get_attr: [third_node, first_address]}
+        deployingnode_ipaddr: {get_attr: [second_node, first_address]}
+
+  thirdnode_deployment:
+    type: OS::Heat::SoftwareDeployment
+    depends_on: firstnode_deployment
+    properties:
+      config:
+        get_resource: othernode_config
+      server:
+        get_resource: third_node
+      input_values:
+        firstnode_ipaddr: {get_attr: [first_node, first_address]}
+        secondnode_ipaddr: {get_attr: [second_node, first_address]}
+        thirdnode_ipaddr: {get_attr: [third_node, first_address]}
+        deployingnode_ipaddr: {get_attr: [third_node, first_address]}
+
+  second_node:
+    type: OS::Nova::Server
+    properties:
+      key_name: {get_param: key_name}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      networks:
+        - network: {get_param: network}
+      # flavor, image etc
+      user_data_format: SOFTWARE_CONFIG
+
+  third_node:
+    type: OS::Nova::Server
+    properties:
+      key_name: {get_param: key_name}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      networks:
+        - network: {get_param: network}
+      # flavor, image etc
+      user_data_format: SOFTWARE_CONFIG
+
+outputs:
+  firstnode_ip:
+      value: {get_attr: [first_node, first_address]}
+  secondnode_ip:
+      value: {get_attr: [second_node, first_address]}
+  thirdnode_ip:
+      value: {get_attr: [third_node, first_address]}

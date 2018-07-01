@@ -1,0 +1,182 @@
+{% load static %}
+{% load portal_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CaaS - HPCC</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css" integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+  <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
+
+  <style>
+  td {
+    white-space: normal !important;
+    word-wrap: break-word;
+  }
+  table {
+    table-layout: fixed;
+  }
+
+  </style>
+</head>
+
+
+<body>
+
+
+<nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'portal:home' %}">HPCC CaaS</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarText">
+      <ul class="navbar-nav mr-auto nav-tabs">
+
+        <li class="nav-item ">
+          <a class="nav-link" href="{% url 'portal:home' %}">Home</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'portal:stacks' %}">Stacks<span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:instances' %}">Instances</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:volumes' %}">Volumes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:images' %}">Images</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:keypairs' %}">Keypairs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:networks' %}">Networks</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:flavors' %}">Flavors</a>
+        </li>
+
+      </ul>
+      <span class="navbar-text">
+        <button type="button" class="btn btn-raised btn-secondary">
+          <span data-toggle="modal" data-target="#update_stack">
+         <a href="#" ><i class="fas fa-wrench"></i> Update this Stack</a></button>
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:create_stack' %}" ><i class="fas fa-plus"></i> Create stack</a></button>
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:logout_system' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></button>
+      </span>
+    </div>
+</nav>
+
+
+<div class="container-fluid">
+      <h2>Details of stack  {{stack_detail.stack.stack_name}}</h2>
+      
+
+      <table class="table table-bordered table-hover">
+          <tbody>
+            <tr>
+              <td>
+                <h5><b><u>STACK INFORMATION:</u></b><br/></h5>
+                <b>Stack ID:</b> {{stack_detail.stack.id}}<br/>
+                <b>Stack Name:</b> {{stack_detail.stack.stack_name}}<br/>
+                <b>Stack Owner:</b> {{stack_detail.stack.stack_owner}}<br/>
+                <b>Stack Description:</b>{{stack_detail.stack.description}}<br/>
+              </td>
+              <td>
+                  <h5><b><u>STACK STATUS:</u></b><br/></h5>
+                  <b>Stack Status:</b> {{stack_detail.stack.stack_status}}<br/>
+                  <b>Stack Status reason:</b> {{stack_detail.stack.stack_status_reason}}<br/>
+                  <b>Stack created:</b> {{ stack_detail.stack.creation_time|age }}<br/>
+
+              </td>
+             </tr>
+
+             <tr>
+              <td>
+                <h5><b><u>STACK PARAMETER:</u></b><br/></h5>
+                {% for key, value in stack_detail.stack.parameters.items %}
+                <b>{{key}}:</b> {{value}}<br/>
+                {% endfor %}
+
+                <h5><b><u>LAUNCH PARAMETER:</u></b><br/></h5>
+                <b>Timeout:</b> {{stack_detail.stack.timeout_mins}}<br/>
+                <b>Disable Rollback Mode:</b> {{stack_detail.stack.disable_rollback}}<br/>
+              </td>
+              <td>
+                <h5><b><u>STACK OUTPUT:</u></b><br/></h5>
+                {% for output in stack_detail.stack.outputs %}
+                    <b>{{output.output_key}}:</b> {{output.output_value}} (Description: {{output.description}})<br/>                    
+                {% endfor %}
+              </td>
+             </tr>
+          </tbody>
+        </table>
+
+        <table class="table table-bordered table-hover">
+          <thead class="thead-dark">
+            <tr>
+              <th>Stack Resources</th>
+              <th>Resources</th>
+              <th>Stack Resources Type</th>
+              <th>Date Updated</th>
+              <th>Status</th>
+              <th>Status reason</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for resource in stack_resource.resources %}
+              <tr>
+              <td>{{resource.resource_name}}</td>
+              <td>{{resource.physical_resource_id}}</td>
+              <td>{{resource.resource_type}}</td>
+              <td>{{resource.updated_time | age}}</td>
+              <td>{{resource.resource_status}}</td>
+              <td>{{resource.resource_status_reason}}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+</div>
+<!--
+<footer class="container-fluid text-left">
+  <div>[CONFIDENTAL] Vu Anh Son - HEDSPI 8 - Thesis - Cluster as a Service v0.2</div>
+</footer>
+-->
+
+<div class="modal fade" id="update_stack" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Update Stack</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'portal:stack_action' 'update' stack_detail.stack.stack_name stack_detail.stack.id %}" method="post" id="stack_update">
+          {% csrf_token %}
+          
+          {% for key, value in stack_template.parameters.items %}
+            <div class="form-group">
+              <label for="{{key}}">{{key}}</label>
+              <input  class="form-control" id="{{key}}" name="{{key}}" required>
+            </div>
+          {% endfor %}
+          <button type="submit" form="stack_update" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

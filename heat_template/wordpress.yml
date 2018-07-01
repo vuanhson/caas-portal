@@ -1,0 +1,132 @@
+heat_template_version: 2017-02-24
+description: |
+  study heat 
+  multi-line description
+parameters:
+  key_name:
+    type: string
+    label: Nhap key pair name
+    description: keypair
+  image:
+    type: string
+    label: Nhap ten image
+    description: image
+  flavor:
+    type: string
+    label: nhap flavor
+    description: flavor
+  network:
+    type: string
+    label: Nhap network
+    description: network 
+  db_name:
+    type: string
+    label: wordpress database name
+  db_password:
+    type: string
+    label: password database
+    hidden: true
+
+resources: 
+  wp_config:
+    type: OS::Heat::SoftwareConfig
+    properties: 
+      group: script
+      inputs:
+        - name: db_name
+        - name: db_user
+        - name: db_password
+        - name: db_ipaddr
+      config: |
+        #!/bin/bash -x
+        yum -y install httpd wordpress
+        sed -i "/Deny from All/d" /etc/httpd/conf.d/wordpress.conf
+        sed -i "s/Require local/Require all granted/" /etc/httpd/conf.d/wordpress.conf
+        sed -i s/database_name_here/$db_name/ /etc/wordpress/wp-config.php
+        sed -i s/username_here/$db_user/      /etc/wordpress/wp-config.php
+        sed -i s/password_here/$db_password/  /etc/wordpress/wp-config.php
+        sed -i s/localhost/$db_ipaddr/        /etc/wordpress/wp-config.php
+        setenforce 0 # de vao httpd
+        systemctl start httpd.service
+  db_config:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+        - name: db_rootpassword
+        - name: db_name
+        - name: db_password
+        - name: db_user
+      config: |
+        #!/bin/bash -x
+        yum -y install mariadb mariadb-server
+        touch /var/log/mariadb/mariadb.log
+        chown mysql.mysql /var/log/mariadb/mariadb.log
+        systemctl start mariadb.service
+        # tao DB
+        mysqladmin -u root password $db_rootpassword
+        cat << EOF | mysql -u root --password=$db_rootpassword
+        CREATE DATABASE $db_name;
+        GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'%'
+        IDENTIFIED BY '$db_password';
+        FLUSH PRIVILEGES;
+        EXIT
+        EOF  
+        
+  wp_deployment: 
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      name: wp_deployment
+      config: 
+        get_resource: wp_config
+      server: 
+        get_resource: wp_instance
+      input_values:
+        db_name: {get_param: db_name}
+        db_user: "root"
+        db_password: {get_param: db_password}
+        db_ipaddr: {get_attr: [db_instance, first_address]}
+
+  db_deployment:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      name: db_deployment
+      config: 
+        get_resource: db_config
+      server: 
+        get_resource: db_instance
+      input_values:
+        db_rootpassword: {get_param: db_password}
+        db_name: {get_param: db_name}
+        db_password: {get_param: db_password}
+        db_user: "root"
+
+
+  wp_instance:
+    type: OS::Nova::Server
+    properties: 
+      key_name: {get_param: key_name}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      networks:
+        - network: {get_param: network}
+      user_data_format: SOFTWARE_CONFIG
+  db_instance:
+    type: OS::Nova::Server
+    properties:
+      key_name: {get_param: key_name}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      networks:
+        - network: {get_param: network}
+      user_data_format: SOFTWARE_CONFIG
+            
+
+
+outputs:
+  db_instance_ip:
+    description: DB instance IP
+    value: {get_attr: [db_instance, first_address]}
+  wp_instance_ip:
+    description: WP instance IP
+    value: {get_attr: [wp_instance, first_address]}

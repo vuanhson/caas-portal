@@ -1,0 +1,174 @@
+{% load static %}
+{% load portal_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CaaS - HPCC</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css" integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+  <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
+
+  <style>
+  td {
+    white-space: normal !important;
+    word-wrap: break-word;
+    vertical-align: middle !important;
+  }
+  table {
+    table-layout: fixed;
+  }
+
+  </style>
+</head>
+
+
+<body>
+
+
+<nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'portal:home' %}">HPCC CaaS</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarText">
+      <ul class="navbar-nav mr-auto nav-tabs">
+
+        <li class="nav-item ">
+          <a class="nav-link" href="{% url 'portal:home' %}">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:stacks' %}">Stacks</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'portal:instances' %}">Instances <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:volumes' %}">Volumes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:images' %}">Images</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:keypairs' %}">Keypairs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:networks' %}">Networks</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:flavors' %}">Flavors</a>
+        </li>
+
+      </ul>
+      <span class="navbar-text">
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:create_stack' %}" ><i class="fas fa-plus"></i> Create stack</a></button>
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:logout_system' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></button>
+      </span>
+    </div>
+</nav>
+
+
+<div class="container-fluid">
+      <h2>Welcome {{ user_name }} | Instances </h2>
+      <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th style="width: 10%">Instance Name</th>
+            <th>Image Name</th>
+            <th>IP Address</th>
+            <th>Flavor</th>
+            <th>Keypair</th>
+            <th>Status</th>
+            <th>Availability Zone</th>
+            <th>Task</th>
+            <th style="width: 10%">Power State</th>
+            <th>Time since created</th>
+            <th style="width: 8%">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for server in data.servers %}
+            <tr>
+            <td>{{server.name}}</td>
+            <td>
+              {% if server.image == '' %}[Using Volumes]
+              {% endif %}
+              {% for image in image_detail.images %}
+                {% if image.id == server.image.id %}{{ image.name }}
+                {% endif %}
+              {% endfor %}
+            </td>
+            <td>
+              {% for network, address in server.addresses.items %}
+                <b>[{{network}}]</b>
+                {% for ip in address %}
+                  {{ ip|instance_ipaddr_type }}: {{ip.addr}}
+                {% endfor %}
+              {% endfor %}
+            </td>
+            <td>
+              {% for flavor in flavor_detail.flavors %}
+                {% if flavor.id == server.flavor.id %}{{ flavor.name }}
+                {% endif %}
+              {% endfor %}
+            </td>
+            <td>{{server.key_name}}</td>
+            <td>{{server.status}}</td>
+            <td>{{ server|instance_az }}</td>
+            <td>{{ server|instance_task_state }}</td>
+            <td>
+                {% if server|instance_power_state == 1 %} RUNNING
+                {% elif server|instance_power_state == 0 %} NOSTATE
+                {% elif server|instance_power_state == 3 %} PAUSED
+                {% elif server|instance_power_state == 4 %} SHUTDOWN
+                {% elif server|instance_power_state == 6 %} CRASHED
+                {% elif server|instance_power_state == 7 %} SUSPENDED
+                {% endif %}
+            </td>
+            <td>{{ server.created|age }}</td>
+            <td>
+
+              <div class="btn-group dropdown">
+                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Choose
+                </button>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton" >
+                  {% if server.status == 'ACTIVE' %}
+                  <a class="dropdown-item" href="{% url 'portal:instance_action' 'stop' server.id %}">Stop</a>
+                  <a class="dropdown-item" href="{% url 'portal:instance_action' 'suspend' server.id %}">Suspend</a>
+
+                  {% elif server.status == 'SHUTOFF' %}
+                  <a class="dropdown-item" href="{% url 'portal:instance_action' 'start' server.id %}">Start</a>
+                  {% elif server.status == 'SUSPENDED' %}
+                  <a class="dropdown-item" href="{% url 'portal:instance_action' 'resume' server.id %}">Resume</a>
+                  {% elif server.status == 'VERIFY_RESIZE' %}
+                  <a class="dropdown-item" href="{% url 'portal:instance_action' 'confirmResize' server.id %}">Confirm resize</a>
+                  {% endif %}
+                  <a class="dropdown-item" href="{% url 'portal:instance_action' 'delete' server.id %}" style="color:red">DELETE</a>
+                </div>
+              </div>
+
+            </td>
+
+            </tr>
+          {% endfor %}
+
+        </tbody>
+      </table>
+
+
+
+</div>
+
+<!--
+<footer class="container-fluid text-left">
+  <div>[CONFIDENTAL] Vu Anh Son - HEDSPI 8 - Thesis - Cluster as a Service v0.2</div>
+</footer>
+-->
+</body>
+</html>

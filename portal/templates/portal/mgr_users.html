@@ -1,0 +1,205 @@
+{% load static %}
+{% load portal_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CaaS - HPCC</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css" integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+  <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
+
+  <style>
+  td {
+    white-space: normal !important;
+    word-wrap: break-word;
+    vertical-align: middle !important;
+  }
+  table {
+    table-layout: fixed;
+  }
+
+  </style>
+</head>
+
+
+<body>
+
+
+<nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'portal:mgr_home' %}">CaaS - System Management</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarText">
+      <ul class="navbar-nav mr-auto nav-tabs">
+
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:mgr_hypervisors' %}">Hypervisors</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'portal:mgr_users' %}">Users</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:mgr_projects' %}">Projects</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:mgr_roles' %}">Roles</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:mgr_instances' %}">Instances</a>
+        </li>
+      </ul>
+      <span class="navbar-text">
+        <button type="button" class="btn btn-raised btn-secondary" data-toggle="modal" data-target="#addusermodal">
+          <i class="fas fa-user-plus"></i> Add user
+        </button>
+        <a href="{% url 'portal:home' %}"><button type="button" class="btn btn-raised btn-secondary">HOME</button></a>
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:logout_system' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></button>
+      </span>
+    </div>
+</nav>
+
+
+<div class="container-fluid">
+      <h2>Welcome {{ user_name }} | Users </h2>
+      <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th style="width: 13%">User Name</th>
+            <th>User ID</th>
+            <th>Domain ID</th>
+            <th>Email</th>
+            <th>Description</th>
+            <th>Enabled</th>
+            <th style="width: 6%">User Details</th>
+            <th style="width: 8%">Actions</th>
+
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for user in data.users %}
+            <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ user.id }}</td>
+            <td>{{ user.domain_id }}</td>
+            <td>
+              {% if user.email %} {{user.email}}
+              {% else %} -
+              {% endif %}
+            </td>
+            <td>
+              {% if user.description %} {{user.description}}
+              {% else %} -
+              {% endif %}
+            </td>
+            <td>
+              {% if user.enabled == True %} Yes
+              {% elif user.enabled == False %} No
+              {% endif %}
+            </td>
+
+            <td>
+              <button class="btn btn-secondary btn-sm" type="button">
+                <a href="{% url 'portal:mgr_user_action' 'viewdetails' user.id %}">VIEW</a>
+              </button>
+            </td>
+
+            <td>
+            <div class="btn-group dropdown">
+                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Choose
+                </button>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton" >
+                  {% if user.enabled == True %}
+                  <a class="dropdown-item" href="{% url 'portal:mgr_user_action' 'disable' user.id %}">Disable User</a>
+                  {% elif user.enabled == False %}
+                  <a class="dropdown-item" href="{% url 'portal:mgr_user_action' 'enable' user.id %}">Enable User</a>
+                  {% endif %}
+
+                  <a class="dropdown-item" href="{% url 'portal:mgr_user_action' 'delete' user.id %}" style="color:red">DELETE USER</a>
+                </div>
+
+            </div>
+            </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+</div>
+
+<!-- Modal add user-->
+<div class="modal fade" id="addusermodal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Add new user:</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'portal:mgr_user_create' %}" method="post" id="admin_add_user">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="domain_id">Domain ID</label>
+            <input type="text" class="form-control" id="domain_id" name="domain_id" value="{{domain_id}}" placeholder="{{domain_id}}" readonly>
+          </div>
+          <div class="form-group">
+            <label for="domain_name">Domain name</label>
+            <input type="text" class="form-control" id="domain_name" name="domain_name" value="{{domain_name}}" placeholder="{{domain_name}}" readonly>
+          </div>
+          <div class="form-group">
+            <label for="user_name">Username</label>
+            <input type="text" class="form-control" id="user_name" name="user_name" placeholder="Enter username" required>
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <input type="text" class="form-control" id="description" name="description" placeholder="Enter description">
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Enter email">
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+          </div>
+          <div class="form-group">
+            <label >Select Primary Project</label>
+            <select class="custom-select" name="primary_project">
+              {% for project in system_project_list.projects %}
+              <option value="{{project.id}}">{{project.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label >Select Role</label>
+            <select class="custom-select" name="role">
+              {% for role in system_role_list.roles %}
+              <option value="{{role.name}}">{{role.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="user_enable" name="enable" value= "true">
+            <label class="form-check-label" for="exampleCheck1" >Enable user</label>
+          </div>
+          <button type="submit" form="admin_add_user" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!--
+<footer class="container-fluid text-left">
+  <div>[CONFIDENTAL] Vu Anh Son - HEDSPI 8 - Thesis - Cluster as a Service v0.2</div>
+</footer>
+-->
+</body>
+</html>

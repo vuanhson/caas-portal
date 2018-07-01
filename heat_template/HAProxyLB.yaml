@@ -1,0 +1,184 @@
+heat_template_version: 2017-02-24
+description: HA Proxy HTTP Loadbalancing
+#       |
+#-------+-----------------------------------------------
+#       |
+#       +-------------------+--------------------+
+#       |IP1                |IP2                 |IP3
+# +-----+-----+     +-------+------+     +-------+------+
+# | Frontend  |     |   Backend#1  |     |   Backend#2  |
+# |  HAProxy  |     |  Web Server  |     |  Web Server  |
+# +-----------+     +--------------+     +--------------+
+
+parameters:
+  key_name:
+    type: string
+    label: Enter keypair
+    description: keypair
+  image:
+    type: string
+    label: Enter image name
+    description: image
+    default: centos7-software-config-hostname
+  flavor:
+    type: string
+    label: Enter flavor
+    description: flavor
+  network:
+    type: string
+    label: Enter network name or ID
+    description: network 
+    default: external
+
+resources:
+
+  HA_node_config:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: http_node1_ipaddr
+      - name: http_node2_ipaddr
+      config: |
+        #!/bin/sh -x
+        yum -y install haproxy
+        mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.org 
+        cat > /etc/haproxy/haproxy.cfg << EOF
+        # create new
+         global
+              # for logging section
+            log         127.0.0.1 local2 info
+            chroot      /var/lib/haproxy
+            pidfile     /var/run/haproxy.pid
+              # max per-process number of connections
+            maxconn     256
+              # process' user and group
+            user        haproxy
+            group       haproxy
+              # makes the process fork into background
+            daemon
+
+        defaults
+              # running mode
+            mode               http
+              # use global settings
+            log                global
+              # get HTTP request log
+            option             httplog
+              # timeout if backends do not reply
+            timeout connect    10s
+              # timeout on client side
+            timeout client     30s
+              # timeout on server side
+            timeout server     30s
+
+        # define frontend ( set any name for "http-in" section )
+        frontend http-in
+              # listen 80
+            bind *:80
+              # set default backend
+            default_backend    backend_servers
+              # send X-Forwarded-For header
+            option             forwardfor
+
+        # define backend
+        backend backend_servers
+              # balance with roundrobin
+            balance            roundrobin
+              # define backend servers
+            server             www01 $http_node1_ipaddr:80 check
+            server             www02 $http_node2_ipaddr:80 check
+        EOF
+        sudo systemctl start haproxy 
+        sudo systemctl enable haproxy 
+        sed -i '/#$ModLoad imudp/s/^#//g' /etc/rsyslog.conf
+        sed -i '/#$UDPServerRun 514/s/^#//g' /etc/rsyslog.conf
+        sed -i '/$UDPServerRun 514/a $AllowedSender UDP, 127.0.0.1' /etc/rsyslog.conf
+        sed -i 's@*.info;mail.none;authpriv.none;cron.none                /var/log/messages@*.info;mail.none;authpriv.none;cron.none,local2.none   /var/log/messages@g' /etc/rsyslog.conf
+        sed -i '/#### RULES ####/a local2.*   /var/log/haproxy.log' /etc/rsyslog.conf
+        sudo systemctl restart rsyslog 
+
+  HA_node_deployment:
+    type: OS::Heat::SoftwareDeployment
+    depends_on: http_node1_deployment
+    properties:
+      config:
+        get_resource: HA_node_config
+      server:
+        get_resource: HA_node
+      input_values:
+        http_node1_ipaddr: {get_attr: [http_node1, first_address]}
+        http_node2_ipaddr: {get_attr: [http_node2, first_address]}
+
+  HA_node:
+    type: OS::Nova::Server
+    properties:
+      key_name: {get_param: key_name}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      networks:
+        - network: {get_param: network}
+      user_data_format: SOFTWARE_CONFIG
+
+
+  httpd_node_config:
+      type: OS::Heat::SoftwareConfig
+      properties:
+        group: script
+        inputs:
+        - name: deployingnode_ipaddr
+        config: |
+          #!/bin/sh -x
+          yum install httpd -y 
+          sudo systemctl start httpd
+          echo $deployingnode_ipaddr > /var/www/html/index.html
+          sed -i -e '196c\' -e 'LogFormat "\\"%{X-Forwarded-For}i\\" %l %u %t \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\"" combined' /etc/httpd/conf/httpd.conf
+          sudo systemctl restart httpd 
+
+  http_node1_deployment:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_resource: httpd_node_config
+      server:
+        get_resource: http_node1
+      input_values:
+        deployingnode_ipaddr: {get_attr: [http_node1, first_address]}
+
+  http_node2_deployment:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config:
+        get_resource: httpd_node_config
+      server:
+        get_resource: http_node2
+      input_values:
+        deployingnode_ipaddr: {get_attr: [http_node2, first_address]}
+
+  http_node1:
+    type: OS::Nova::Server
+    properties:
+      key_name: {get_param: key_name}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      networks:
+        - network: {get_param: network}
+      user_data_format: SOFTWARE_CONFIG
+
+  http_node2:
+    type: OS::Nova::Server
+    properties:
+      key_name: {get_param: key_name}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      networks:
+        - network: {get_param: network}
+      user_data_format: SOFTWARE_CONFIG
+
+outputs:
+  HA_node_IP:
+      value: {get_attr: [HA_node, first_address]}
+  http_node1_IP:
+      value: {get_attr: [http_node1, first_address]}
+  http_node2_IP:
+      value: {get_attr: [http_node2, first_address]}

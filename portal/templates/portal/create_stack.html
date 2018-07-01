@@ -1,0 +1,450 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CaaS - HPCC</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css" integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+  <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
+
+  <style>
+  td {
+    white-space: normal !important;
+    word-wrap: break-word;
+    vertical-align: middle !important;
+  }
+  table {
+    table-layout: fixed;
+  }
+  </style>
+</head>
+
+
+<body>
+<nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'portal:home' %}">HPCC CaaS</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarText">
+      <ul class="navbar-nav mr-auto nav-tabs">
+
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:home' %}">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:stacks' %}">Stacks</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:instances' %}">Instances</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:volumes' %}">Volumes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:images' %}">Images</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:keypairs' %}">Keypairs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:networks' %}">Networks</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:flavors' %}">Flavors</a>
+        </li>
+
+      </ul>
+      <span class="navbar-text">
+        {% if is_admin == True %}
+        <a href="{% url 'portal:mgr_hypervisors' %}"><button type="button" class="btn btn-raised btn-secondary">ADMIN SITE</button></a>
+        {% endif %}
+        <button type="button" class="btn btn-raised btn-secondary"><a href="#" ><i class="fas fa-plus"></i> Create stack</a></button>
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:logout_system' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></button>
+      </span>
+    </div>
+</nav>
+
+<!-- -------------------------------------Choose stack-------------------------------------- -->
+<div class="container-fluid">
+      <h2>Create new stack</h2>
+      <hr/>
+      <h4>Step 1: Choose stack software</h4>
+
+      <table class="table">
+        <tbody>
+          <tr>
+
+            <td>
+              <div class="card" style="width: 18rem;">
+                <img class="card-img-top" src="https://cdn.root.bg/2017/03/galera.jpg" alt="Card image cap">
+                <div class="card-body">
+                  <h5 class="card-title">Galera 3 nodes</h5>
+                  <p class="card-text">Create 3 instances, one first-node and two replication-nodes</p>
+                  <span data-toggle="modal" data-target="#galeradb">
+                  <a href="#" class="btn btn-primary" >Start</a>
+                  <span>
+                </div>
+              </div>
+            </td>
+            
+            <td>
+              <div class="card" style="width: 18rem;">
+                <img class="card-img-top" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRK6PulLREnYp3CVLONAS3Dw5XnE_lLDNEfGl1mm_WqfnWIplQ_" alt="Card image cap">
+                <div class="card-body">
+                  <h5 class="card-title">HA Proxy</h5>
+                  <p class="card-text">Create 3 instances, one HA Node and two backend nodes</p>
+                  <span data-toggle="modal" data-target="#HAProxy">
+                  <a href="#" class="btn btn-primary">Start</a>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="card" style="width: 18rem;">
+                <img class="card-img-top" src="http://growtowinmarketing.com/wp-content/uploads/2015/06/How-To-Write-a-WordPress-Post-7.png" alt="Card image cap">
+                <div class="card-body">
+                  <h5 class="card-title">Wordpress</h5>
+                  <p class="card-text">Create 2 instances, one is wordpress node and other is database node</p>
+                  <span data-toggle="modal" data-target="#Wordpress">
+                  <a href="#" class="btn btn-primary">Start</a>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="card" style="width: 18rem;">
+                <img class="card-img-top" src="http://glusterfs.epsylonia.net/glusterfs/art-gallery/nabeel/gluster-logo-nabeel.jpg" alt="Card image cap">
+                <div class="card-body">
+                  <h5 class="card-title">Gluster FS - Distributed mode</h5>
+                  <p class="card-text">Create 3 instances, install glusterfs in distribute mode</p>
+                  <span data-toggle="modal" data-target="#GlusterFS">
+                  <a href="#" class="btn btn-primary">Start</a>
+                </div>
+              </div>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+
+</div>
+
+<!-- ----------------------------------------------------GALERADB----------------------------------------- -->
+<div class="modal fade" id="galeradb" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Step 2: Config Galera Cluster</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'portal:stack_exec' %}" method="post" id="stack_exec_galera">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="stack_name">Stack name</label>
+            <input type="text" class="form-control" id="stack_name" name="stack_name" placeholder="Enter stack name" required>
+          </div>
+          <div class="form-group">
+            <label for="stack_timeout">Creation Timeout (minutes)</label>
+            <input type="text" class="form-control" id="stack_timeout" name="stack_timeout" placeholder="Enter timeout in minutes" required>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="rollback" name="rollback" value= "true">
+            <label class="form-check-label">Rollback On Failure? (Enable rollback on create/update failure)</label>
+          </div>
+
+          <hr/>
+
+          <div class="form-group">
+            <label for="db_password">DB_Password</label>
+            <input type="password" class="form-control" id="db_password" name="db_password" placeholder="Enter database password" required>
+          </div>
+
+          <div class="form-group">
+            <label >Select Flavor</label>
+            <select class="custom-select" name="flavor">
+              {% for flavor in flavor_list.flavors %}
+              <option value="{{flavor.name}}">{{flavor.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label >Select Image</label>
+            <select class="custom-select" name="image">
+              {% for image in image_list.images %}
+              <option value="{{image.name}}">{{image.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label >Select Keypair</label>
+            <select class="custom-select" name="keypair">
+              {% for key in keypair_list.keypairs %}
+              <option value="{{key.keypair.name}}">{{key.keypair.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        
+          <div class="form-group">
+            <label >Select Network</label>
+            <select class="custom-select" name="network">
+              {% for network in network_list.networks %}
+              <option value="{{network.name}}">{{network.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <input type="hidden" name="stack" value="galeradb">
+
+          <button type="submit" form="stack_exec_galera" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ---------------------------HAProxy--------------------------------- -->
+<div class="modal fade" id="HAProxy" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Step 2: Config HAProxy Cluster</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'portal:stack_exec' %}" method="post" id="stack_exec_haproxy">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="stack_name">Stack name</label>
+            <input type="text" class="form-control" id="stack_name" name="stack_name" placeholder="Enter stack name" required>
+          </div>
+          <div class="form-group">
+            <label for="stack_timeout">Creation Timeout (minutes)</label>
+            <input type="text" class="form-control" id="stack_timeout" name="stack_timeout" placeholder="Enter timeout in minutes" required>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="rollback" name="rollback" value= "true">
+            <label class="form-check-label">Rollback On Failure? (Enable rollback on create/update failure)</label>
+          </div>
+
+          <hr/>
+          <div class="form-group">
+            <label >Select Flavor</label>
+            <select class="custom-select" name="flavor">
+              {% for flavor in flavor_list.flavors %}
+              <option value="{{flavor.name}}">{{flavor.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label >Select Image</label>
+            <select class="custom-select" name="image">
+              {% for image in image_list.images %}
+              <option value="{{image.name}}">{{image.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label >Select Keypair</label>
+            <select class="custom-select" name="keypair">
+              {% for key in keypair_list.keypairs %}
+              <option value="{{key.keypair.name}}">{{key.keypair.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        
+          <div class="form-group">
+            <label >Select Network</label>
+            <select class="custom-select" name="network">
+              {% for network in network_list.networks %}
+              <option value="{{network.name}}">{{network.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <input type="hidden" name="stack" value="HAProxy">
+
+          <button type="submit" form="stack_exec_haproxy" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ---------------------------GlusterFS--------------------------------- -->
+<div class="modal fade" id="GlusterFS" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Step 2: Config GlusterFS Cluster</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'portal:stack_exec' %}" method="post" id="stack_exec_glusterfs">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="stack_name">Stack name</label>
+            <input type="text" class="form-control" id="stack_name" name="stack_name" placeholder="Enter stack name" required>
+          </div>
+          <div class="form-group">
+            <label for="stack_timeout">Creation Timeout (minutes)</label>
+            <input type="text" class="form-control" id="stack_timeout" name="stack_timeout" placeholder="Enter timeout in minutes" required>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="rollback" name="rollback" value= "true">
+            <label class="form-check-label">Rollback On Failure? (Enable rollback on create/update failure)</label>
+          </div>
+
+          <hr/>
+          <div class="form-group">
+            <label >Select Flavor</label>
+            <select class="custom-select" name="flavor">
+              {% for flavor in flavor_list.flavors %}
+              <option value="{{flavor.name}}">{{flavor.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label >Select Image</label>
+            <select class="custom-select" name="image">
+              {% for image in image_list.images %}
+              <option value="{{image.name}}">{{image.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label >Select Keypair</label>
+            <select class="custom-select" name="keypair">
+              {% for key in keypair_list.keypairs %}
+              <option value="{{key.keypair.name}}">{{key.keypair.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        
+          <div class="form-group">
+            <label >Select Network</label>
+            <select class="custom-select" name="network">
+              {% for network in network_list.networks %}
+              <option value="{{network.name}}">{{network.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <input type="hidden" name="stack" value="GlusterFS">
+
+          <button type="submit" form="stack_exec_glusterfs" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------------------------Wordpress--------------------------------- -->
+<div class="modal fade" id="Wordpress" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Step 2: Config Wordpress Cluster</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'portal:stack_exec' %}" method="post" id="stack_exec_wordpress">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="stack_name">Stack name</label>
+            <input type="text" class="form-control" id="stack_name" name="stack_name" placeholder="Enter stack name" required>
+          </div>
+          <div class="form-group">
+            <label for="stack_timeout">Creation Timeout (minutes)</label>
+            <input type="text" class="form-control" id="stack_timeout" name="stack_timeout" placeholder="Enter timeout in minutes" required>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="rollback" name="rollback" value= "true">
+            <label class="form-check-label">Rollback On Failure? (Enable rollback on create/update failure)</label>
+          </div>
+          <hr/>
+
+          <div class="form-group">
+            <label for="WPDB_name">Wordpress Database Name</label>
+            <input type="text" class="form-control" id="stack_timeout" name="db_name" placeholder="Enter Wordpress Database Name" required>
+          </div>
+           <div class="form-group">
+            <label for="WPDB_pass">Wordpress Database Password</label>
+            <input type="password" class="form-control" id="stack_timeout" name="db_password" placeholder="Enter Wordpress Database Password" required>
+          </div>
+
+
+          <div class="form-group">
+            <label >Select Flavor</label>
+            <select class="custom-select" name="flavor">
+              {% for flavor in flavor_list.flavors %}
+              <option value="{{flavor.name}}">{{flavor.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label >Select Image</label>
+            <select class="custom-select" name="image">
+              {% for image in image_list.images %}
+              <option value="{{image.name}}">{{image.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label >Select Keypair</label>
+            <select class="custom-select" name="keypair">
+              {% for key in keypair_list.keypairs %}
+              <option value="{{key.keypair.name}}">{{key.keypair.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        
+          <div class="form-group">
+            <label >Select Network</label>
+            <select class="custom-select" name="network">
+              {% for network in network_list.networks %}
+              <option value="{{network.name}}">{{network.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <input type="hidden" name="stack" value="WP">
+
+          <button type="submit" form="stack_exec_wordpress" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--
+<footer class="container-fluid text-left">
+  <div>[CONFIDENTAL] Vu Anh Son - HEDSPI 8 - Thesis - Cluster as a Service v0.2</div>
+</footer>
+-->
+</body>
+</html>

@@ -1,0 +1,134 @@
+{% load static %}
+{% load portal_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CaaS - HPCC</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css" integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+  <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
+
+  <style>
+  td {
+    white-space: normal !important;
+    word-wrap: break-word;
+    vertical-align: middle !important;
+  }
+  table {
+    table-layout: fixed;
+  }
+
+  </style>
+</head>
+
+
+<body>
+
+
+<nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'portal:home' %}">HPCC CaaS</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarText">
+      <ul class="navbar-nav mr-auto nav-tabs">
+
+        <li class="nav-item ">
+          <a class="nav-link" href="{% url 'portal:home' %}">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:stacks' %}">Stacks</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:instances' %}">Instances</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:volumes' %}">Volumes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:images' %}">Images</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:keypairs' %}">Keypairs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'portal:networks' %}">Networks</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'portal:flavors' %}">Flavors<span class="sr-only">(current)</span></a>
+        </li>
+
+      </ul>
+      <span class="navbar-text">
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:create_stack' %}" ><i class="fas fa-plus"></i> Create stack</a></button>
+        <button type="button" class="btn btn-raised btn-secondary"><a href="{% url 'portal:logout_system' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></button>
+      </span>
+    </div>
+</nav>
+
+
+<div class="container-fluid">
+      <h2>Welcome {{ user_name }} | Flavors </h2>
+      <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th>Name</th>
+            <th>vCPUs</th>
+            <th>RAM</th>
+            <th>Root Disk</th>
+            <th>Ephemeral Disk</th>
+            <th>Swap Disk</th>
+            <th>RX/TX Factor</th>
+            <th style="width: 20%">ID</th>
+            <th>Public</th>
+            <th style="width: 8%">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for flavor in data.flavors %}
+            <tr>
+            <td>{{ flavor.name }}</td>
+            <td>{{ flavor.vcpus }}</td>
+            <td>{{ flavor.ram }} MB</td>
+            <td>{{ flavor.disk }} GB</td>
+            <td>{{ flavor|ephemeral_disk }} GB</td>
+            <td>{{ flavor.swap }} MB</td>
+            <td>{{ flavor.rxtx_factor }}</td>
+            <td>{{ flavor.id }}</td>
+            <td>
+              {% if flavor|os_flavor_access == True %} Yes
+              {% elif flavor|os_flavor_access == False %} No
+              {% endif %}
+            </td>
+
+            <td>
+
+              <div class="btn-group dropdown">
+                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Choose
+                </button>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton" >
+                  <a class="dropdown-item" href="{% url 'portal:flavor_action' 'delete' flavor.id %}" style="color:red">DELETE</a>
+                </div>
+              </div>
+
+            </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+</div>
+
+<!--
+<footer class="container-fluid text-left">
+  <div>[CONFIDENTAL] Vu Anh Son - HEDSPI 8 - Thesis - Cluster as a Service v0.2</div>
+</footer>
+-->
+</body>
+</html>
